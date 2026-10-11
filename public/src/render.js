@@ -494,7 +494,7 @@ export class Renderer {
   // Square board of n cells at (x, y); the background texture runs on a finer sub-grid.
   setBoard({ x, y, size, n }) {
     const big = size / n;
-    const sub = Math.max(2, Math.round(big / 24));
+    const sub = 4; // texture majors (every 4th line) land exactly on the lattice
     this.board = { x, y, size, n, big, cell: big / sub, cols: n * sub, rows: n * sub };
     this.dirty = true;
     this.rain = null;
@@ -607,8 +607,6 @@ export class Renderer {
     } else {
       this.kickGlitch(320, 0.55);
       this.flash = { a: 0.22, color: col };
-      const c = this.cellCenter(game.winLine.cells[Math.floor(game.winLine.cells.length / 2)]);
-      this.texts.push({ x: c.x, y: c.y - b.big * 0.5, text: `${game.winner === X ? 'X' : 'O'} WINS`, color: col, t0: now });
     }
   }
 
@@ -680,11 +678,11 @@ export class Renderer {
     if (this.s.boardStyle === 'matrix') this.drawRain(ctx, t, dt, accent);
     this.drawSweep(ctx, t, accent, bw, bh);
     this.drawWaves(ctx, now, bw, bh);
-    this.drawCellTags(ctx, game, t, accent);
+    if (!opts.attract) this.drawCellTags(ctx, game, t, accent);
     ctx.restore();
 
     this.drawDividers(ctx, t, accent);
-    this.drawBorder(ctx, t, accent, bw, bh, game);
+    this.drawBorder(ctx, t, accent, bw, bh, game, opts.attract);
     this.drawHover(ctx, game, opts.hover, t);
     this.drawMarks(ctx, game, now, t);
     this.drawWinLine(ctx, now);
@@ -755,22 +753,35 @@ export class Renderer {
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
-    // pulse travelling along the tubes
-    const u = (t * 0.35) % 1;
-    ctx.fillStyle = '#ffffff';
-    ctx.shadowColor = accent;
-    ctx.shadowBlur = lw * 6;
+    // soft glints travelling along the tubes (kept inside each tube's extent)
+    const inset = b.big * 0.08;
+    const span = b.size - inset * 2;
+    const len = Math.min(b.big * 0.5, 60);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineWidth = lw * 0.9;
     for (let i = 1; i < b.n; i++) {
-      const p = b.x + i * b.big;
-      const q = b.y + i * b.big;
-      const s = lw * 1.1;
-      ctx.fillRect(p - s / 2, b.y + b.size * ((u + i * 0.37) % 1) - s * 2, s, s * 4);
-      ctx.fillRect(b.x + b.size * ((1 - u + i * 0.29) % 1) - s * 2, q - s / 2, s * 4, s);
+      for (const vertical of [true, false]) {
+        const u = (t * 0.22 + i * 0.37 + (vertical ? 0 : 0.5)) % 1;
+        const head = inset + u * (span + len);
+        const a0 = Math.max(inset, head - len);
+        const a1 = Math.min(inset + span, head);
+        if (a1 <= a0) continue;
+        const fixed = (vertical ? b.x : b.y) + i * b.big;
+        const [x0, y0, x1, y1] = vertical ? [fixed, b.y + a0, fixed, b.y + a1] : [b.x + a0, fixed, b.x + a1, fixed];
+        const g = ctx.createLinearGradient(vertical ? 0 : b.x + head - len, vertical ? b.y + head - len : 0, vertical ? 0 : b.x + head, vertical ? b.y + head : 0);
+        g.addColorStop(0, 'rgba(255,255,255,0)');
+        g.addColorStop(1, 'rgba(255,255,255,0.9)');
+        ctx.strokeStyle = g;
+        ctx.beginPath();
+        ctx.moveTo(x0, y0);
+        ctx.lineTo(x1, y1);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }
 
-  drawBorder(ctx, t, accent, bw, bh, game) {
+  drawBorder(ctx, t, accent, bw, bh, game, attract) {
     const b = this.board;
     const wrap = game.wrap;
     ctx.save();
@@ -811,7 +822,7 @@ export class Renderer {
     ctx.stroke();
     ctx.restore();
 
-    if (!this.preview && this.h - (b.y + bh) > 26) {
+    if (!this.preview && !attract && this.h - (b.y + bh) > 26) {
       ctx.save();
       ctx.font = `600 9px ${MONO}`;
       ctx.fillStyle = hexA(accent, 0.55);
@@ -924,7 +935,7 @@ export class Renderer {
     const xy = (i) => ({ x: i % b.n, y: Math.floor(i / b.n) });
     const px = (x, y) => ({ x: b.x + (x + 0.5) * b.big, y: b.y + (y + 0.5) * b.big });
     // overshoot the ends a little (but not past the board)
-    const ext = 0.38;
+    const ext = 0.3;
     const first = xy(cells[0]);
     const lastC = xy(cells[cells.length - 1]);
     let prevPt = px(first.x - d.x * ext, first.y - d.y * ext);

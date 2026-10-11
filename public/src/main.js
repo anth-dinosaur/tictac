@@ -67,11 +67,21 @@ function layout(n) {
   const ins = insets();
   const top = ins.top + 66;
   const bottom = ins.bottom + 36;
-  const side = Math.max(ins.left, ins.right) + 18;
+  const side = Math.max(ins.left, ins.right) + 22;
   const aw = w - side * 2;
   const ah = h - top - bottom;
   const size = Math.floor(Math.min(aw, ah, 560) / n) * n;
   return { x: Math.round((w - size) / 2), y: Math.round(top + (ah - size) / 2), size, n };
+}
+
+// The start hint lives in the gap between the HUD and the board so it never covers cells.
+function placeHint(L) {
+  const hud = insets().top + 56;
+  const gap = Math.max(0, L.y - 8 - hud);
+  const el = $('hint');
+  el.style.top = `${hud}px`;
+  el.style.height = `${gap}px`;
+  el.classList.toggle('compact', gap < 120);
 }
 
 function newGame() {
@@ -81,7 +91,11 @@ function newGame() {
 
 function resize() {
   renderer.setSize(window.innerWidth, window.innerHeight, dpr);
-  if (game && state !== 'title') renderer.setBoard(layout(game.n));
+  if (game && state !== 'title') {
+    const L = layout(game.n);
+    renderer.setBoard(L);
+    placeHint(L);
+  }
   else newDemo();
   sizePreview();
 }
@@ -121,7 +135,9 @@ function show(id, on) {
 function startRound() {
   game = newGame();
   renderer.reset();
-  renderer.setBoard(layout(game.n));
+  const L = layout(game.n);
+  renderer.setBoard(L);
+  placeHint(L);
   gridDirty = false;
   human = settings.side === 'o' ? O : settings.side === 'swap' && round % 2 ? O : X;
   round++;
@@ -182,7 +198,7 @@ function endRound(ev) {
       : kind === 'lose'
         ? ['FATAL_EXCEPTION 0xDEAD', 'CORE DUMPED', `CPU COMPLETED ${game.k} IN A ROW`]
         : vsCpu()
-          ? ['ACCESS GRANTED', 'SYSTEM OVERRIDE', `${game.k} IN A ROW // CPU DEFEATED`]
+          ? ['ACCESS GRANTED', 'CPU PWNED', `${game.k} IN A ROW // YOU WIN`]
           : ['ACCESS GRANTED', `${markName(game.winner)} WINS`, `${game.k} IN A ROW${game.winLine && isWrapped(game) ? ' // VIA EDGE WRAP' : ''}`];
   $('over-tag').textContent = tag;
   $('over-title').textContent = title;
@@ -756,7 +772,7 @@ function frame(now) {
 
   if (state === 'title') {
     runAutoplay(demo, renderer, now, 650);
-    if (!settingsOpen) renderer.render(demo, now, { dim: 0.3 });
+    if (!settingsOpen) renderer.render(demo, now, { dim: 0.5, attract: true });
   } else if (game) {
     if (state === 'playing' && cpuAt && now >= cpuAt) {
       cpuAt = 0;
