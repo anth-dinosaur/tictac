@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="TICTAC" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="theme-color" content="#020309" />
+    <link rel="apple-touch-icon" href="icon-180.png" />
+    <link rel="icon" href="icon-180.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <title>TICTAC</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <canvas id="stage"></canvas>
+    <div id="crt" aria-hidden="true"></div>
+    <div id="safe-probe" aria-hidden="true"></div>
+
+    <header id="hud" class="hidden">
+      <div class="stat"><span class="lbl" id="hud-x-lbl">YOU·X</span><span class="val" id="hud-x">00</span></div>
+      <div class="stat"><span class="lbl">DRAW</span><span class="val" id="hud-d">00</span></div>
+      <div class="stat"><span class="lbl" id="hud-o-lbl">CPU·O</span><span class="val" id="hud-o">00</span></div>
+      <div class="stat turn"><span class="lbl">TURN</span><span class="val" id="hud-turn">YOU</span></div>
+      <button id="btn-pause" class="icon-btn" aria-label="Pause"><span></span><span></span></button>
+    </header>
+
+    <div id="hint" class="hidden">
+      <div class="tap-glyph"><i></i></div>
+      <div class="hint-text">TAP A CELL</div>
+      <div class="hint-sub" id="hint-sub">3 IN A ROW // DON'T LET THE CPU</div>
+    </div>
+
+    <section id="screen-title" class="screen">
+      <div class="title-wrap">
+        <div class="kicker">// NEURAL GRID PROTOCOL v2.077</div>
+        <h1 class="logo glitch" data-text="TICTAC">TICTAC</h1>
+        <div class="menu">
+          <button class="btn primary" id="btn-play" data-glitch><span>▶ JACK IN</span></button>
+          <button class="btn" id="btn-config" data-glitch><span>⚙ CONFIG</span></button>
+        </div>
+        <div class="slots" id="slots-title"></div>
+        <div class="footer-tip">TAP TO PLACE · 3 IN A ROW · EDGES CAN WRAP</div>
+      </div>
+    </section>
+
+    <section id="screen-pause" class="screen hidden">
+      <div class="panel">
+        <div class="panel-tag">SYS.HALT</div>
+        <h2 class="glitch" data-text="PAUSED">PAUSED</h2>
+        <div class="menu">
+          <button class="btn primary" id="btn-resume"><span>▶ RESUME</span></button>
+          <button class="btn" id="btn-restart"><span>↻ REBOOT</span></button>
+          <button class="btn" id="btn-pause-config"><span>⚙ CONFIG</span></button>
+          <button class="btn ghost" id="btn-quit"><span>⏏ DISCONNECT</span></button>
+        </div>
+        <div class="slots" id="slots-pause"></div>
+      </div>
+    </section>
+
+    <section id="screen-over" class="screen hidden">
+      <div class="panel" id="over-panel">
+        <div class="panel-tag" id="over-tag">ACCESS GRANTED</div>
+        <h2 class="glitch" data-text="YOU WIN" id="over-title">YOU WIN</h2>
+        <div class="over-reason" id="over-reason">LINE COMPLETE</div>
+        <div class="stats">
+          <div><span class="lbl" id="over-x-lbl">YOU</span><span class="val" id="over-x">0</span></div>
+          <div><span class="lbl">DRAW</span><span class="val" id="over-d">0</span></div>
+          <div><span class="lbl" id="over-o-lbl">CPU</span><span class="val" id="over-o">0</span></div>
+        </div>
+        <div class="menu">
+          <button class="btn primary" id="btn-again"><span>↻ NEXT ROUND</span></button>
+          <button class="btn" id="btn-over-config"><span>⚙ CONFIG</span></button>
+          <button class="btn ghost" id="btn-over-quit"><span>⏏ DISCONNECT</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section id="screen-settings" class="screen hidden">
+      <div class="settings">
+        <div class="settings-head">
+          <button class="btn small" id="btn-settings-back"><span>◂ BACK</span></button>
+          <div class="settings-title glitch" data-text="CONFIG">CONFIG</div>
+          <div class="settings-id">SYS/CFG</div>
+        </div>
+        <div class="preview-frame"><canvas id="preview"></canvas></div>
+        <nav class="tabs" id="tabs">
+          <button data-tab="x" class="on">X</button>
+          <button data-tab="o">O</button>
+          <button data-tab="board">BOARD</button>
+          <button data-tab="cpu">CPU</button>
+          <button data-tab="audio">AUDIO</button>
+          <button data-tab="slots">SLOTS</button>
+        </nav>
+        <div class="settings-body" id="settings-body"></div>
+      </div>
+    </section>
+
+    <div id="toast" class="hidden"></div>
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>
